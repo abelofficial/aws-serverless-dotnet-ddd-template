@@ -1,0 +1,54 @@
+service: booking-service
+
+plugins:
+    - serverless-appsync-plugin
+
+provider:
+    name: aws
+    runtime: dotnet6
+    region: eu-north-1
+    environment:
+        STAGE: ${self:custom.stage}
+
+custom:
+    stage: ${opt:stage, 'dev'}
+    region: eu-north-1
+
+package:
+    artifact: bin/Debug/net6.0/LambdaFunctions.zip
+
+functions:
+    sayHello:
+        handler: LambdaFunctions::LambdaFunctions.Functions.Hello::SayHello
+        iamRoleStatementsInherit: true
+        iamRoleStatementsName: sayHello-lambda-access-${self.custom.stage}
+        iamRoleStatements:
+            - Effect: "Allow"
+              Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+              Resources:
+                  - "arn:aws:dynamodb:${self.custom.region}:*:table/helloTable-${self:custom.stage}"
+
+resources:
+    Resources:
+        HelloTable:
+            Type: AWS::DynamoDB::Table
+            Properties:
+                TableName: helloTable-${self:custom.stage}
+                BillingMode: PAY_PER_REQUEST
+                AttributeDefinitions:
+                    - AttributeName: Id
+                      AttributeType: S
+                    - AttributeName: RangeKey
+                      AttributeType: S
+                KeySchema:
+                    - AttributeName: Id
+                      KeyType: HASH
+                GlobalSecondaryIndexes:
+                    - IndexName: RangeKeyIndex
+                      KeySchema:
+                          - AttributeName: RangeKey
+                            KeyType: HASH
+                      Projection:
+                          ProjectionType: ALL

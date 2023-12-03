@@ -1,0 +1,8 @@
+{
+    "Information": [],
+    "profile": "default",
+    "region": "eu-north-1",
+    "configuration": "Release",
+    "framework": "netcoreapp6",
+    "template": "serverless.yml"
+}
