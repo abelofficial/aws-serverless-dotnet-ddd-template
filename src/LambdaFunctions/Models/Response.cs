@@ -2,7 +2,7 @@ using Domain.Interfaces;
 
 namespace LambdaFunctions.Models;
 
-public class Response<T> where T : ISuccessfulResponse
+public class Response<T> where T : IResponse
 {
     public IServiceExceptionResponse Error
     {

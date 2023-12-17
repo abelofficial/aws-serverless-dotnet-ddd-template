@@ -24,18 +24,19 @@ public abstract class BaseFunctions
         _serviceProvider = services.BuildServiceProvider();
     }
 
-    protected async Task<Response<T>> HandleResponse<T>(Func<Task<T>> lambdaFunction) where T : ISuccessfulResponse
+    protected async Task<Response<TResponse>> HandleResponse<TRequest, TResponse>(TRequest request, ILambdaContext context, Func<TRequest, Task<TResponse>> lambdaFunction) where TResponse : IResponse where TRequest : IRequest
     {
         try
         {
-            var result = await lambdaFunction();
+            Log.Information("Processing request: {@Request}", request);
+            var result = await lambdaFunction(request);
             Log.Debug("Generated response successfully: {@Result}", result);
-            return new Response<T> { Data = result, Error = null };
+            return new Response<TResponse> { Data = result, Error = null };
         }
         catch (Exception error)
         {
             Log.Error("UnknownException: {@Error}", error);
-            return new Response<T>
+            return new Response<TResponse>
             {
                 Error = new ServiceExceptionResponse
                 {

@@ -2,27 +2,29 @@ using System.Threading.Tasks;
 using Amazon.Lambda.Core;
 using Domain.Interfaces;
 using LambdaFunctions.Models;
+using Microsoft.Extensions.Configuration;
 using Serilog;
 
 namespace LambdaFunctions.Functions;
 
 public class Hello : BaseFunctions
 {
+
     public Hello() : base()
     {
+
     }
 
     public async Task<Response<SayHelloResponse>> SayHello(SayHelloRequest request, ILambdaContext context)
     {
-        Log.Information("Processing request: {@Request}", request);
-        return await HandleResponse(async () =>
+        return await HandleResponse(request, context, async (req) =>
         {
-            return await Task.FromResult(new SayHelloResponse() { Message = $"Hello there {request.Name}" });
+            return await Task.FromResult(new SayHelloResponse() { Message = $"Hello there {req.Name}" });
         });
     }
 }
 
-public class SayHelloRequest
+public class SayHelloRequest : IRequest
 {
     public string Name
     {
@@ -31,7 +33,7 @@ public class SayHelloRequest
     }
 }
 
-public class SayHelloResponse : ISuccessfulResponse
+public class SayHelloResponse : IResponse
 {
     public SayHelloResponse()
     {
