@@ -1,4 +1,4 @@
-namespace Domain.Interfaces;
+namespace Application.CQRS;
 
 public interface IRequest
 {

@@ -1,9 +1,7 @@
 using System.Threading.Tasks;
 using Amazon.Lambda.Core;
-using Domain.Interfaces;
-using LambdaFunctions.Models;
-using Microsoft.Extensions.Configuration;
-using Serilog;
+using Application.Queries;
+using Application.Results;
 
 namespace LambdaFunctions.Functions;
 
@@ -24,24 +22,3 @@ public class Hello : BaseFunctions
     }
 }
 
-public class SayHelloRequest : IRequest
-{
-    public string Name
-    {
-        get;
-        set;
-    }
-}
-
-public class SayHelloResponse : IResponse
-{
-    public SayHelloResponse()
-    {
-    }
-
-    public string Message
-    {
-        get;
-        set;
-    }
-}

@@ -2,8 +2,8 @@ using System;
 using System.Net;
 using System.Threading.Tasks;
 using Amazon.Lambda.Core;
-using Domain.Interfaces;
-using LambdaFunctions.Models;
+using Application.CQRS;
+using Application.Results;
 using LambdaFunctions.Settings;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
@@ -24,7 +24,9 @@ public abstract class BaseFunctions
         _serviceProvider = services.BuildServiceProvider();
     }
 
-    protected async Task<Response<TResponse>> HandleResponse<TRequest, TResponse>(TRequest request, ILambdaContext context, Func<TRequest, Task<TResponse>> lambdaFunction) where TResponse : IResponse where TRequest : IRequest
+    protected async Task<Response<TResponse>> HandleResponse<TRequest, TResponse>(TRequest request, ILambdaContext context, Func<TRequest, Task<TResponse>> lambdaFunction)
+    where TResponse : IResponse
+    where TRequest : IRequest
     {
         try
         {
