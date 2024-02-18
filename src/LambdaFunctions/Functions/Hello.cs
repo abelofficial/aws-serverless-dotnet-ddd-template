@@ -17,7 +17,7 @@ public class Hello : BaseFunctions
     {
         return await HandleResponse(request, context, async (req) =>
         {
-            return await Task.FromResult(new SayHelloResponse() { Message = $"Hello there {req.Name}" });
+            return await _mediator.Send(request);
         });
     }
 }
