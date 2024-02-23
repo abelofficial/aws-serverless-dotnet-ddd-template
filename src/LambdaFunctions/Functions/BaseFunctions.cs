@@ -2,17 +2,20 @@ using System;
 using System.Net;
 using System.Threading.Tasks;
 using Amazon.Lambda.Core;
-using Domain.Interfaces;
-using LambdaFunctions.Models;
+using Application.CQRS;
+using Application.Results;
 using LambdaFunctions.Settings;
+using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using IRequest = Application.CQRS.IRequest;
 
 [assembly: LambdaSerializer(typeof(CustomLambdaSerializer))]
 namespace LambdaFunctions.Functions;
 public abstract class BaseFunctions
 {
     private readonly IServiceProvider _serviceProvider;
+    protected readonly IMediator _mediator;
 
     protected BaseFunctions()
     {
@@ -21,10 +24,14 @@ public abstract class BaseFunctions
             .CreateLogger();
         var services = new ServiceCollection();
         Startup.ConfigureServices(services);
+
         _serviceProvider = services.BuildServiceProvider();
+        _mediator = _serviceProvider.GetService<IMediator>();
     }
 
-    protected async Task<Response<TResponse>> HandleResponse<TRequest, TResponse>(TRequest request, ILambdaContext context, Func<TRequest, Task<TResponse>> lambdaFunction) where TResponse : IResponse where TRequest : IRequest
+    protected async Task<Response<TResponse>> HandleResponse<TRequest, TResponse>(TRequest request, ILambdaContext context, Func<TRequest, Task<TResponse>> lambdaFunction)
+    where TResponse : IResponse
+    where TRequest : IRequest
     {
         try
         {

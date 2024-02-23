@@ -1,9 +1,7 @@
 using System.Threading.Tasks;
 using Amazon.Lambda.Core;
-using Domain.Interfaces;
-using LambdaFunctions.Models;
-using Microsoft.Extensions.Configuration;
-using Serilog;
+using Application.Queries;
+using Application.Results;
 
 namespace LambdaFunctions.Functions;
 
@@ -19,29 +17,8 @@ public class Hello : BaseFunctions
     {
         return await HandleResponse(request, context, async (req) =>
         {
-            return await Task.FromResult(new SayHelloResponse() { Message = $"Hello there {req.Name}" });
+            return await _mediator.Send(request);
         });
     }
 }
 
-public class SayHelloRequest : IRequest
-{
-    public string Name
-    {
-        get;
-        set;
-    }
-}
-
-public class SayHelloResponse : IResponse
-{
-    public SayHelloResponse()
-    {
-    }
-
-    public string Message
-    {
-        get;
-        set;
-    }
-}

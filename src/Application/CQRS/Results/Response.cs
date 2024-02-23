@@ -1,6 +1,7 @@
+using Application.CQRS;
 using Domain.Interfaces;
 
-namespace LambdaFunctions.Models;
+namespace Application.Results;
 
 public class Response<T> where T : IResponse
 {
