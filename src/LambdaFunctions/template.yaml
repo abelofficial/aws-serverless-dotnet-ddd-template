@@ -1,0 +1,130 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+    AWS Serverless .NET 8 DDD Template - Booking Service
+
+Globals:
+    Function:
+        Timeout: 30
+        Runtime: dotnet8
+        Architectures:
+            - x86_64
+        Environment:
+            Variables:
+                STAGE: !Ref Stage
+
+Parameters:
+    Stage:
+        Type: String
+        Default: dev
+        Description: Deployment stage (dev, staging, prod)
+    Region:
+        Type: String
+        Default: eu-north-1
+        Description: AWS region for deployment
+
+Resources:
+    # DynamoDB Table
+    HelloTable:
+        Type: AWS::DynamoDB::Table
+        Properties:
+            TableName: !Sub helloTable-${Stage}
+            BillingMode: PAY_PER_REQUEST
+            AttributeDefinitions:
+                - AttributeName: Id
+                  AttributeType: S
+                - AttributeName: RangeKey
+                  AttributeType: S
+            KeySchema:
+                - AttributeName: Id
+                  KeyType: HASH
+            GlobalSecondaryIndexes:
+                - IndexName: RangeKeyIndex
+                  KeySchema:
+                      - AttributeName: RangeKey
+                        KeyType: HASH
+                  Projection:
+                      ProjectionType: ALL
+
+    # Lambda Function
+    SayHelloFunction:
+        Type: AWS::Serverless::Function
+        Properties:
+            FunctionName: !Sub sayHello-${Stage}
+            CodeUri: bin/Release/net8.0/publish
+            Handler: LambdaFunctions::LambdaFunctions.Functions.Hello::SayHello
+            Events:
+                ApiEvent:
+                    Type: Api
+                    Properties:
+                        Path: /hello
+                        Method: post
+            Policies:
+                - DynamoDBCrudPolicy:
+                      TableName: !Ref HelloTable
+                - Statement:
+                      - Effect: Allow
+                        Action:
+                            - dynamodb:GetItem
+                            - dynamodb:PutItem
+                        Resource: !GetAtt HelloTable.Arn
+            Environment:
+                Variables:
+                    HELLO_TABLE_NAME: !Ref HelloTable
+
+    SayGoodByeFunction:
+        Type: AWS::Serverless::Function
+        Properties:
+            FunctionName: !Sub sayGoodBye-${Stage}
+            CodeUri: bin/Release/net8.0/publish
+            Handler: LambdaFunctions::LambdaFunctions.Functions.GoodBye::SayGoodBye
+            Events:
+                ApiEvent:
+                    Type: Api
+                    Properties:
+                        Path: /goodBye
+                        Method: post
+            Policies:
+                - DynamoDBCrudPolicy:
+                      TableName: !Ref HelloTable
+                - Statement:
+                      - Effect: Allow
+                        Action:
+                            - dynamodb:GetItem
+                            - dynamodb:PutItem
+                        Resource: !GetAtt HelloTable.Arn
+            Environment:
+                Variables:
+                    HELLO_TABLE_NAME: !Ref HelloTable
+
+    # API Gateway
+    ApiGatewayApi:
+        Type: AWS::Serverless::Api
+        Properties:
+            StageName: !Ref Stage
+            Cors:
+                AllowMethods: "'POST,OPTIONS'"
+                AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+                AllowOrigin: "'*'"
+
+Outputs:
+    # Lambda Function
+    SayHelloFunction:
+        Description: "SayHello Lambda Function ARN"
+        Value: !GetAtt SayHelloFunction.Arn
+        Export:
+            Name: !Sub ${AWS::StackName}-SayHelloFunction
+
+    # DynamoDB Table
+    HelloTable:
+        Description: "Hello DynamoDB Table Name"
+        Value: !Ref HelloTable
+        Export:
+            Name: !Sub ${AWS::StackName}-HelloTable
+
+    # API Gateway
+    ApiGatewayApi:
+        Description: "API Gateway endpoint URL"
+        Value: !Sub "https://${ApiGatewayApi}.execute-api.${AWS::Region}.amazonaws.com/${Stage}/"
+        Export:
+            Name: !Sub ${AWS::StackName}-ApiGatewayApi

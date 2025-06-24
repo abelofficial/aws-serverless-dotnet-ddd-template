@@ -1,0 +1,10 @@
+{
+    "body": "{\"Name\": \"SAM Test\"}",
+    "resource": "/hello",
+    "path": "/hello",
+    "httpMethod": "POST",
+    "headers": {
+        "Content-Type": "application/json"
+    },
+    "isBase64Encoded": false
+}

@@ -3,15 +3,26 @@
     "keywords": [],
     "author": "Abel Sintaro",
     "version": "1.0.0",
-    "description": "",
+    "description": "AWS Serverless .NET 8 DDD Template with SAM",
     "scripts": {
-        "build": "dotnet lambda package --configuration Debug --framework net8.0 --output-package bin/release/net8.0/LambdaFunctions.zip",
-        "deploy:dev": "yarn build && sls deploy --stage dev",
-        "deploy:staging": "yarn build && sls deploy --stage staging",
-        "deploy:prod": "yarn build && sls deploy --stage prod"
+        "debug": "dotnet lambda-test-tool-8.0",
+        "build": "dotnet build",
+        "build:sam": "sam build",
+        "deploy:dev": "sam build && sam deploy",
+        "deploy:staging": "sam build && sam deploy --config-env staging",
+        "deploy:prod": "sam build && sam deploy --config-env prod",
+        "local:api": "sam local start-api",
+        "local:lambda": "sam local start-lambda",
+        "local:api:function": "sam local start-api --parameter-overrides FunctionName=$npm_config_function",
+        "api": "./start-api.sh",
+        "api:all": "dotnet build && sam local start-api",
+        "api:hello": "./start-api.sh SayHelloFunction",
+        "api:booking": "./start-api.sh CreateBookingFunction",
+        "api:user": "./start-api.sh UserFunction",
+        "validate": "sam validate",
+        "logs": "sam logs -n SayHelloFunction --stack-name booking-service --tail"
     },
     "dependencies": {
-        "serverless": "^3.4.0",
-        "serverless-appsync-plugin": "^2.2.0"
+        "aws-sam-cli": "^1.0.0"
     }
 }

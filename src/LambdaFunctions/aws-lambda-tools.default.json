@@ -4,5 +4,5 @@
     "region": "eu-north-1",
     "configuration": "Release",
     "framework": "net8.0",
-    "template": "serverless.yml"
+    "template": "template.yaml"
 }
