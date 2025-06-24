@@ -2,6 +2,21 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "lambda-test-tool",
+            "command": "dotnet",
+            "type": "process",
+            "args": ["lambda-test-tool-8.0"],
+            "options": {
+                "cwd": "${workspaceFolder}/src/LambdaFunctions"
+            },
+            "problemMatcher": [],
+            "isBackground": true,
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
             "label": "build",
             "command": "dotnet",
             "type": "process",
@@ -24,6 +39,36 @@
                 "/consoleloggerparameters:NoSummary"
             ],
             "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "sam-build",
+            "command": "sam",
+            "type": "process",
+            "args": ["build"],
+            "problemMatcher": []
+        },
+        {
+            "label": "sam-validate",
+            "command": "sam",
+            "type": "process",
+            "args": ["validate"],
+            "problemMatcher": []
+        },
+        {
+            "label": "sam-local-api",
+            "command": "sam",
+            "type": "process",
+            "args": ["local", "start-api"],
+            "problemMatcher": [],
+            "isBackground": true
+        },
+        {
+            "label": "sam-local-lambda",
+            "command": "sam",
+            "type": "process",
+            "args": ["local", "start-lambda"],
+            "problemMatcher": [],
+            "isBackground": true
         },
         {
             "label": "publish",

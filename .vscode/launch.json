@@ -2,10 +2,25 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug Lambda Functions (AWS Test Tool)",
+            "name": "Debug Lambda Functions (AWS Lambda Test Tool)",
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
+            "program": "~/.dotnet/tools/dotnet-lambda-test-tool-8.0",
+            "args": [],
+            "cwd": "${workspaceFolder}/src/LambdaFunctions",
+            "console": "internalConsole",
+            "stopAtEntry": false,
+            "internalConsoleOptions": "openOnSessionStart",
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            }
+        },
+        {
+            "name": "Debug Lambda Functions (SAM - Requires Official VS Code)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "sam-build",
             "program": "~/.dotnet/tools/dotnet-lambda-test-tool-8.0",
             "args": [],
             "cwd": "${workspaceFolder}/src/LambdaFunctions",
