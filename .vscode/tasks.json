@@ -7,7 +7,19 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/tests/LambdaFunctions.Tests/LambdaFunctions.Tests.csproj",
+                "${workspaceFolder}/src/LambdaFunctions/LambdaFunctions.csproj",
+                "/property:GenerateFullPaths=true",
+                "/consoleloggerparameters:NoSummary"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "build-solution",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "build",
+                "${workspaceFolder}/BookingService.sln",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
@@ -19,7 +31,7 @@
             "type": "process",
             "args": [
                 "publish",
-                "${workspaceFolder}/tests/LambdaFunctions.Tests/LambdaFunctions.Tests.csproj",
+                "${workspaceFolder}/src/LambdaFunctions/LambdaFunctions.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
@@ -33,6 +45,16 @@
                 "watch",
                 "run",
                 "--project",
+                "${workspaceFolder}/src/LambdaFunctions/LambdaFunctions.csproj"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "test",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "test",
                 "${workspaceFolder}/tests/LambdaFunctions.Tests/LambdaFunctions.Tests.csproj"
             ],
             "problemMatcher": "$msCompile"

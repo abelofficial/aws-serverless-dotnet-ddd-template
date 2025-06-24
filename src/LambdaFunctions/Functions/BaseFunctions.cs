@@ -47,7 +47,7 @@ public abstract class BaseFunctions
             {
                 Error = new ServiceExceptionResponse
                 {
-                    Status = HttpStatusCode.GetName(HttpStatusCode.InternalServerError),
+                    Status = ((int)HttpStatusCode.InternalServerError).ToString(),
                     Message = "An error occurred while processing your request."
                 }
             };

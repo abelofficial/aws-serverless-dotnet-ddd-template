@@ -9,6 +9,6 @@ public class Installer : IExtensionsInstaller
 {
     public void InstallServices(IServiceCollection services, IConfiguration config)
     {
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
+        services.AddMediatR(Assembly.GetExecutingAssembly());
     }
 }

@@ -3,6 +3,6 @@
     "profile": "default",
     "region": "eu-north-1",
     "configuration": "Release",
-    "framework": "netcoreapp6",
+    "framework": "net8.0",
     "template": "serverless.yml"
 }

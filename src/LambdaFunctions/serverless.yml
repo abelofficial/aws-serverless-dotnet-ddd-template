@@ -5,7 +5,7 @@ plugins:
 
 provider:
     name: aws
-    runtime: dotnet6
+    runtime: dotnet8
     region: eu-north-1
     environment:
         STAGE: ${self:custom.stage}
@@ -15,7 +15,7 @@ custom:
     region: eu-north-1
 
 package:
-    artifact: bin/Debug/net6.0/LambdaFunctions.zip
+    artifact: bin/Debug/net8.0/LambdaFunctions.zip
 
 functions:
     sayHello:
