@@ -23,6 +23,7 @@ A modern, production-ready template for building AWS Lambda serverless applicati
 
 ```
 aws-serverless-dotnet-ddd-template/
+├── AwsServerlessDotnetDddTemplate.sln  # Solution file
 ├── src/
 │   ├── Domain/                     # Domain layer (entities, interfaces)
 │   ├── Application/                # Application layer (CQRS, handlers)
@@ -41,6 +42,29 @@ aws-serverless-dotnet-ddd-template/
 │   └── hello-event.json
 ├── .vscode/                        # VS Code tasks and launch configs
 └── README.md                       # This file
+```
+
+---
+
+## 🎯 Quick Start
+
+### **1. Clone and Customize**
+
+```bash
+# Clone the template
+git clone <your-repo-url>
+cd aws-serverless-dotnet-ddd-template
+
+# Customize the project name (optional)
+# See "Customization" section below for detailed instructions
+```
+
+### **2. Build and Test**
+
+```bash
+cd src/LambdaFunctions
+dotnet build
+dotnet lambda-test-tool-8.0
 ```
 
 ---
@@ -233,6 +257,8 @@ All Lambda functions inherit from `BaseFunctions` which provides:
     -   **A:** Create a new class inheriting from `BaseFunctions`, add it to `template.yaml`, and create an npm script if needed.
 -   **Q: Why do I get 500 errors?**
     -   **A:** Check your handler exists, request format is correct, and all dependencies are properly injected.
+-   **Q: How do I customize this template for my project?**
+    -   **A:** See the "Customization" section below for step-by-step instructions.
 
 ---
 
