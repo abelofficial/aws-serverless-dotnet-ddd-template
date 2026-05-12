@@ -1,12 +1,12 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: >
-    AWS Serverless .NET 8 DDD Template - Booking Service
+    AWS Serverless .NET 10 DDD Template - Booking Service
 
 Globals:
     Function:
         Timeout: 30
-        Runtime: dotnet8
+        Runtime: dotnet10
         Architectures:
             - x86_64
         Environment:
@@ -51,7 +51,7 @@ Resources:
         Type: AWS::Serverless::Function
         Properties:
             FunctionName: !Sub sayHello-${Stage}
-            CodeUri: bin/Release/net8.0/publish
+            CodeUri: bin/Release/net10.0/publish
             Handler: LambdaFunctions::LambdaFunctions.Functions.Hello::SayHello
             Events:
                 ApiEvent:
@@ -76,7 +76,7 @@ Resources:
         Type: AWS::Serverless::Function
         Properties:
             FunctionName: !Sub sayGoodBye-${Stage}
-            CodeUri: bin/Release/net8.0/publish
+            CodeUri: bin/Release/net10.0/publish
             Handler: LambdaFunctions::LambdaFunctions.Functions.GoodBye::SayGoodBye
             Events:
                 ApiEvent:

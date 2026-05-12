@@ -1,12 +1,12 @@
-# AWS Serverless .NET 8 DDD Template
+# AWS Serverless .NET 10 DDD Template
 
-A modern, production-ready template for building AWS Lambda serverless applications in .NET 8 using Domain-Driven Design (DDD), CQRS with MediatR, and best practices for local development and deployment.
+A modern, production-ready template for building AWS Lambda serverless applications in .NET 10 using Domain-Driven Design (DDD), CQRS with MediatR, and best practices for local development and deployment.
 
 ---
 
 ## 🚀 Features
 
--   **.NET 8** with clean DDD architecture
+-   **.NET 10** with clean DDD architecture
 -   **CQRS** with MediatR
 -   **AWS Lambda** entry points with API Gateway support
 -   **DynamoDB** integration
@@ -23,7 +23,7 @@ A modern, production-ready template for building AWS Lambda serverless applicati
 
 ```
 aws-serverless-dotnet-ddd-template/
-├── AwsServerlessDotnetDddTemplate.sln  # Solution file
+├── AwsServerlessDotnetDddTemplate.slnx # Primary solution file
 ├── src/
 │   ├── Domain/                     # Domain layer (entities, interfaces)
 │   ├── Application/                # Application layer (CQRS, handlers)
@@ -64,7 +64,7 @@ cd aws-serverless-dotnet-ddd-template
 ```bash
 cd src/LambdaFunctions
 dotnet build
-dotnet lambda-test-tool-8.0
+dotnet lambda-test-tool-10.0
 ```
 
 ---
@@ -84,7 +84,7 @@ dotnet publish -c Release
 
 ```bash
 cd src/LambdaFunctions
-dotnet lambda-test-tool-8.0
+dotnet lambda-test-tool-10.0
 ```
 
 -   Opens web UI at [http://localhost:5050](http://localhost:5050)
@@ -237,7 +237,7 @@ All Lambda functions inherit from `BaseFunctions` which provides:
 
 -   [AWS Lambda Test Tool](https://docs.aws.amazon.com/lambda/latest/dg/with-dotnet-test-tool.html)
 -   [AWS SAM](https://docs.aws.amazon.com/serverless-application-model/)
--   [.NET 8](https://docs.microsoft.com/en-us/dotnet/)
+-   [.NET 10](https://docs.microsoft.com/en-us/dotnet/)
 -   [MediatR](https://github.com/jbogard/MediatR)
 -   [Serilog](https://serilog.net/)
 

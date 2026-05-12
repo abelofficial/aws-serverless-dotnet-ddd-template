@@ -17,10 +17,7 @@ public class Hello : BaseFunctions
     {
         var sayHelloRequest = ExtractRequestFromApiGateway<SayHelloRequest>(request);
 
-        return await HandleApiGatewayResponse(sayHelloRequest, context, async (req) =>
-        {
-            return await _mediator.Send(req);
-        });
+        return await HandleApiGatewayResponse(sayHelloRequest, context, async (req) => await _mediator.Send(req));
     }
 }
 
