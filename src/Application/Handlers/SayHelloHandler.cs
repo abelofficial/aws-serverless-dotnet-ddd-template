@@ -1,5 +1,6 @@
 using Application.Queries;
 using Application.Results;
+using Domain.Errors;
 
 namespace Application.Handlers;
 
@@ -16,15 +17,11 @@ public interface ISayHelloHandler
 
 public class SayHelloHandler: ISayHelloHandler
 {
-    public SayHelloHandler()
-    {
-    }
-
     public async Task<SayHelloResponse> Handle(SayHelloRequest request, CancellationToken cancellationToken)
     {
         if(request.Name == "error")
         {
-            throw new Exception("An error occurred while processing the request.");
+            throw new InvalidOperationException("Name can't be 'error'");
         }
         return await Task.FromResult(new SayHelloResponse() { Message = $"Hello there {request.Name}, how are you?" });
     }

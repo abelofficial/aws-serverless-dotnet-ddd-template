@@ -18,6 +18,19 @@ namespace LambdaFunctions.Functions;
 public abstract class BaseFunctions
 {
     protected readonly IServiceProvider ServiceProvider;
+    private static readonly JsonSerializerOptions ApiJsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+    };
+
+    private static readonly Dictionary<string, string> DefaultApiHeaders = new()
+    {
+        { "Content-Type", "application/json" },
+        { "Access-Control-Allow-Origin", "*" },
+        { "Access-Control-Allow-Headers", "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token" },
+        { "Access-Control-Allow-Methods", "POST,OPTIONS" }
+    };
 
     protected BaseFunctions()
     {
@@ -31,10 +44,18 @@ public abstract class BaseFunctions
     }
 
     // Direct Lambda Access
-    protected async Task<Response<TResponse>> HandleResponse<TRequest, TResponse>(TRequest request, ILambdaContext context, Func<TRequest, Task<TResponse>> lambdaFunction)
+    protected async Task<Response<TResponse>> HandleResponse<TRequest, TResponse>(
+        TRequest request,
+        ILambdaContext context,
+        Func<TRequest, Task<TResponse>> lambdaFunction,
+        Action<ApiExceptionPolicyHandler> configureExceptionPolicy = null)
     where TResponse : IResponse
     where TRequest : IRequest
     {
+        var exceptionPolicy = new ApiExceptionPolicyHandler()
+            .HandleException<Exception>(HttpStatusCode.InternalServerError);
+        configureExceptionPolicy?.Invoke(exceptionPolicy);
+
         try
         {
             Log.Information("Processing request: {@Request}", request);
@@ -44,23 +65,33 @@ public abstract class BaseFunctions
         }
         catch (Exception error)
         {
-            Log.Error("UnknownException: {@Error}", error);
+            exceptionPolicy.TryResolve(error, out var httpStatusCode, out var message);
+            Log.Error("HandledException ({StatusCode}): {@Error}", (int)httpStatusCode, error);
+
             return new Response<TResponse>
             {
                 Error = new ServiceExceptionResponse
                 {
-                    Status = ((int)HttpStatusCode.InternalServerError).ToString(),
-                    Message = "An error occurred while processing your request."
+                    Status = ((int)httpStatusCode).ToString(),
+                    Message = message
                 }
             };
         }
     }
 
     // New overload for API Gateway responses
-    protected async Task<APIGatewayProxyResponse> HandleApiGatewayResponse<TRequest, TResponse>(TRequest request, ILambdaContext context, Func<TRequest, Task<TResponse>> lambdaFunction)
+    protected async Task<APIGatewayProxyResponse> HandleApiGatewayResponse<TRequest, TResponse>(
+        TRequest request,
+        ILambdaContext context,
+        Func<TRequest, Task<TResponse>> lambdaFunction,
+        Action<ApiExceptionPolicyHandler> configureExceptionPolicy = null)
     where TResponse : IResponse
     where TRequest : IRequest
     {
+        var exceptionPolicy = new ApiExceptionPolicyHandler()
+            .HandleException<Exception>(HttpStatusCode.InternalServerError);
+        configureExceptionPolicy?.Invoke(exceptionPolicy);
+
         try
         {
             Log.Information("Processing request: {@Request}", request);
@@ -68,56 +99,35 @@ public abstract class BaseFunctions
             Log.Debug("Generated response successfully: {@Result}", result);
 
             var response = new Response<TResponse> { Data = result, Error = null };
-            var jsonOptions = new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-            };
-
-            return new APIGatewayProxyResponse
-            {
-                StatusCode = 200,
-                Headers = new Dictionary<string, string>
-                {
-                    { "Content-Type", "application/json" },
-                    { "Access-Control-Allow-Origin", "*" },
-                    { "Access-Control-Allow-Headers", "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token" },
-                    { "Access-Control-Allow-Methods", "POST,OPTIONS" }
-                },
-                Body = JsonSerializer.Serialize(response, jsonOptions)
-            };
+            return BuildApiGatewayResponse(HttpStatusCode.OK, response);
         }
         catch (Exception error)
         {
-            Log.Error("UnknownException: {@Error}", error);
+            exceptionPolicy.TryResolve(error, out var httpStatusCode, out var message);
+            Log.Error("HandledException ({StatusCode}): {@Error}", (int)httpStatusCode, error);
+
             var errorResponse = new Response<TResponse>
             {
                 Error = new ServiceExceptionResponse
                 {
-                    Status = ((int)HttpStatusCode.InternalServerError).ToString(),
-                    Message = "An error occurred while processing your request."
+                    Status = ((int)httpStatusCode).ToString(),
+                    Message = message
                 }
             };
 
-            var jsonOptions = new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-            };
-
-            return new APIGatewayProxyResponse
-            {
-                StatusCode = 500,
-                Headers = new Dictionary<string, string>
-                {
-                    { "Content-Type", "application/json" },
-                    { "Access-Control-Allow-Origin", "*" },
-                    { "Access-Control-Allow-Headers", "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token" },
-                    { "Access-Control-Allow-Methods", "POST,OPTIONS" }
-                },
-                Body = JsonSerializer.Serialize(errorResponse, jsonOptions)
-            };
+            return BuildApiGatewayResponse(httpStatusCode, errorResponse);
         }
+    }
+
+    private static APIGatewayProxyResponse BuildApiGatewayResponse<TResponse>(HttpStatusCode statusCode, Response<TResponse> response)
+    where TResponse : IResponse
+    {
+        return new APIGatewayProxyResponse
+        {
+            StatusCode = (int)statusCode,
+            Headers = DefaultApiHeaders,
+            Body = JsonSerializer.Serialize(response, ApiJsonOptions)
+        };
     }
 
     // Helper method to extract request from API Gateway

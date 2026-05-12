@@ -57,7 +57,7 @@ Resources:
                 ApiEvent:
                     Type: Api
                     Properties:
-                        Path: /hello
+                        Path: /sayHello
                         Method: post
             Policies:
                 - DynamoDBCrudPolicy:
@@ -68,6 +68,20 @@ Resources:
                             - dynamodb:GetItem
                             - dynamodb:PutItem
                         Resource: !GetAtt HelloTable.Arn
+            Environment:
+                Variables:
+                    HELLO_TABLE_NAME: !Ref HelloTable
+
+    # Direct Lambda invocation example
+    SayHelloDirectFunction:
+        Type: AWS::Serverless::Function
+        Properties:
+            FunctionName: !Sub sayHelloDirect-${Stage}
+            CodeUri: bin/Release/net10.0/publish
+            Handler: LambdaFunctions::LambdaFunctions.Functions.Hello::SayHelloDirect
+            Policies:
+                - DynamoDBCrudPolicy:
+                      TableName: !Ref HelloTable
             Environment:
                 Variables:
                     HELLO_TABLE_NAME: !Ref HelloTable
@@ -89,6 +103,12 @@ Outputs:
         Value: !GetAtt SayHelloFunction.Arn
         Export:
             Name: !Sub ${AWS::StackName}-SayHelloFunction
+
+    SayHelloDirectFunction:
+        Description: "SayHelloDirect Lambda Function ARN"
+        Value: !GetAtt SayHelloDirectFunction.Arn
+        Export:
+            Name: !Sub ${AWS::StackName}-SayHelloDirectFunction
 
     # DynamoDB Table
     HelloTable:
