@@ -1,6 +1,5 @@
-﻿using System.Reflection;
+﻿using Application.Handlers;
 using Domain.Interfaces;
-using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -9,6 +8,6 @@ public class Installer : IExtensionsInstaller
 {
     public void InstallServices(IServiceCollection services, IConfiguration config)
     {
-        services.AddMediatR(Assembly.GetExecutingAssembly());
+        services.AddSingleton<ISayHelloHandler, SayHelloHandler>();
     }
 }

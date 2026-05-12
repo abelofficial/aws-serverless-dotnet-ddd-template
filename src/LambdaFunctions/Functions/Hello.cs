@@ -1,7 +1,9 @@
-using System.Text.Json;
+using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Amazon.Lambda.APIGatewayEvents;
 using Amazon.Lambda.Core;
+using Application.Handlers;
 using Application.Queries;
 
 namespace LambdaFunctions.Functions;
@@ -9,15 +11,20 @@ namespace LambdaFunctions.Functions;
 public class Hello : BaseFunctions
 {
 
-    public Hello() : base()
-    {
-    }
-
     public async Task<APIGatewayProxyResponse> SayHello(APIGatewayProxyRequest request, ILambdaContext context)
     {
         var sayHelloRequest = ExtractRequestFromApiGateway<SayHelloRequest>(request);
 
-        return await HandleApiGatewayResponse(sayHelloRequest, context, async (req) => await _mediator.Send(req));
+        var service = ServiceProvider.GetService(typeof(ISayHelloHandler)) as ISayHelloHandler;
+        return await HandleApiGatewayResponse(sayHelloRequest, context, async (req) =>
+        {
+            if (service != null)
+            {
+                return await service.Handle(req, CancellationToken.None);
+            }
+
+            throw new Exception("Service not found");
+        });
     }
 }
 

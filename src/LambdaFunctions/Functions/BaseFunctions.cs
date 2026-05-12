@@ -9,7 +9,6 @@ using Amazon.Lambda.Core;
 using Application.CQRS;
 using Application.Results;
 using LambdaFunctions.Settings;
-using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using IRequest = Application.CQRS.IRequest;
@@ -18,8 +17,7 @@ using IRequest = Application.CQRS.IRequest;
 namespace LambdaFunctions.Functions;
 public abstract class BaseFunctions
 {
-    private readonly IServiceProvider _serviceProvider;
-    protected readonly IMediator _mediator;
+    protected readonly IServiceProvider ServiceProvider;
 
     protected BaseFunctions()
     {
@@ -29,11 +27,10 @@ public abstract class BaseFunctions
         var services = new ServiceCollection();
         Startup.ConfigureServices(services);
 
-        _serviceProvider = services.BuildServiceProvider();
-        _mediator = _serviceProvider.GetService<IMediator>();
+        ServiceProvider = services.BuildServiceProvider();
     }
 
-    // Original method for direct Lambda responses
+    // Direct Lambda Access
     protected async Task<Response<TResponse>> HandleResponse<TRequest, TResponse>(TRequest request, ILambdaContext context, Func<TRequest, Task<TResponse>> lambdaFunction)
     where TResponse : IResponse
     where TRequest : IRequest
@@ -74,7 +71,7 @@ public abstract class BaseFunctions
             var jsonOptions = new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
             };
 
             return new APIGatewayProxyResponse
@@ -105,7 +102,7 @@ public abstract class BaseFunctions
             var jsonOptions = new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
             };
 
             return new APIGatewayProxyResponse

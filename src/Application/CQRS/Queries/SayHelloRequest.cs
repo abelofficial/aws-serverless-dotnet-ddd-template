@@ -1,10 +1,8 @@
 using Application.CQRS;
 
-using ICQRSRequest = MediatR.IRequest<Application.Results.SayHelloResponse>;
-
 namespace Application.Queries;
 
-public class SayHelloRequest : IRequest, ICQRSRequest
+public class SayHelloRequest : IRequest
 {
     public string Name
     {

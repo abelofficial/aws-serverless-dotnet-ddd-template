@@ -72,31 +72,6 @@ Resources:
                 Variables:
                     HELLO_TABLE_NAME: !Ref HelloTable
 
-    SayGoodByeFunction:
-        Type: AWS::Serverless::Function
-        Properties:
-            FunctionName: !Sub sayGoodBye-${Stage}
-            CodeUri: bin/Release/net10.0/publish
-            Handler: LambdaFunctions::LambdaFunctions.Functions.GoodBye::SayGoodBye
-            Events:
-                ApiEvent:
-                    Type: Api
-                    Properties:
-                        Path: /goodBye
-                        Method: post
-            Policies:
-                - DynamoDBCrudPolicy:
-                      TableName: !Ref HelloTable
-                - Statement:
-                      - Effect: Allow
-                        Action:
-                            - dynamodb:GetItem
-                            - dynamodb:PutItem
-                        Resource: !GetAtt HelloTable.Arn
-            Environment:
-                Variables:
-                    HELLO_TABLE_NAME: !Ref HelloTable
-
     # API Gateway
     ApiGatewayApi:
         Type: AWS::Serverless::Api

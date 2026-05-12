@@ -1,10 +1,20 @@
 using Application.Queries;
 using Application.Results;
-using MediatR;
 
 namespace Application.Handlers;
 
-public class SayHelloHandler : IRequestHandler<SayHelloRequest, SayHelloResponse>
+public interface ISayHelloHandler
+{
+    /// <summary>
+    /// Handles the SayHelloRequest and returns a SayHelloResponse.
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    Task<SayHelloResponse> Handle(SayHelloRequest request, CancellationToken cancellationToken);
+}
+
+public class SayHelloHandler: ISayHelloHandler
 {
     public SayHelloHandler()
     {
@@ -12,6 +22,10 @@ public class SayHelloHandler : IRequestHandler<SayHelloRequest, SayHelloResponse
 
     public async Task<SayHelloResponse> Handle(SayHelloRequest request, CancellationToken cancellationToken)
     {
-        return await Task.FromResult(new SayHelloResponse() { Message = $"Hello there {request.Name}" });
+        if(request.Name == "error")
+        {
+            throw new Exception("An error occurred while processing the request.");
+        }
+        return await Task.FromResult(new SayHelloResponse() { Message = $"Hello there {request.Name}, how are you?" });
     }
 }
