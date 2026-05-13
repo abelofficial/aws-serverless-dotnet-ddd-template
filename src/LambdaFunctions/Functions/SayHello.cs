@@ -18,6 +18,13 @@ public class SayHello : BaseFunctions<SayHelloRequest, SayHelloResponse>
         return base.Handler(request, context);
     }
 
+    protected override void ConfigureExceptionPolicy(ApiExceptionPolicyHandler policy)
+    {
+        policy.HandleException<BadRequestException>(HttpStatusCode.BadRequest, "Bad Request");
+        policy.HandleException<InvalidOperationException>(HttpStatusCode.BadRequest);
+        policy.HandleException<NotFoundException>(HttpStatusCode.NotFound);
+    }
+
     protected override async Task<SayHelloResponse> HandleRequest(SayHelloRequest request, ILambdaContext context)
     {
         var service = ServiceProvider.GetService(typeof(ISayHelloHandler)) as ISayHelloHandler;
@@ -33,13 +40,6 @@ public class SayHello : BaseFunctions<SayHelloRequest, SayHelloResponse>
         }
 
         throw new NotFoundException("Service not found");
-    }
-
-    protected override void ConfigureExceptionPolicy(ApiExceptionPolicyHandler policy)
-    {
-        policy.HandleException<BadRequestException>(HttpStatusCode.BadRequest, "Bad Request");
-        policy.HandleException<InvalidOperationException>(HttpStatusCode.BadRequest);
-        policy.HandleException<NotFoundException>(HttpStatusCode.NotFound);
     }
 }
 
