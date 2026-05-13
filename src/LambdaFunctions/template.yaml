@@ -47,18 +47,18 @@ Resources:
                       ProjectionType: ALL
 
     # Lambda Function
-    SayHelloFunction:
+    SayHello:
         Type: AWS::Serverless::Function
         Properties:
             FunctionName: !Sub sayHello-${Stage}
             CodeUri: bin/Release/net10.0/publish
-            Handler: LambdaFunctions::LambdaFunctions.Functions.Hello::SayHello
+            Handler: LambdaFunctions::LambdaFunctions.Functions.SayHello::Handler
             Events:
                 ApiEvent:
                     Type: Api
                     Properties:
                         Path: /sayHello
-                        Method: post
+                        Method: get
             Policies:
                 - DynamoDBCrudPolicy:
                       TableName: !Ref HelloTable
@@ -68,20 +68,6 @@ Resources:
                             - dynamodb:GetItem
                             - dynamodb:PutItem
                         Resource: !GetAtt HelloTable.Arn
-            Environment:
-                Variables:
-                    HELLO_TABLE_NAME: !Ref HelloTable
-
-    # Direct Lambda invocation example
-    SayHelloDirectFunction:
-        Type: AWS::Serverless::Function
-        Properties:
-            FunctionName: !Sub sayHelloDirect-${Stage}
-            CodeUri: bin/Release/net10.0/publish
-            Handler: LambdaFunctions::LambdaFunctions.Functions.Hello::SayHelloDirect
-            Policies:
-                - DynamoDBCrudPolicy:
-                      TableName: !Ref HelloTable
             Environment:
                 Variables:
                     HELLO_TABLE_NAME: !Ref HelloTable
@@ -98,17 +84,11 @@ Resources:
 
 Outputs:
     # Lambda Function
-    SayHelloFunction:
+    SayHello:
         Description: "SayHello Lambda Function ARN"
-        Value: !GetAtt SayHelloFunction.Arn
+        Value: !GetAtt SayHello.Arn
         Export:
-            Name: !Sub ${AWS::StackName}-SayHelloFunction
-
-    SayHelloDirectFunction:
-        Description: "SayHelloDirect Lambda Function ARN"
-        Value: !GetAtt SayHelloDirectFunction.Arn
-        Export:
-            Name: !Sub ${AWS::StackName}-SayHelloDirectFunction
+            Name: !Sub ${AWS::StackName}-SayHello
 
     # DynamoDB Table
     HelloTable:
