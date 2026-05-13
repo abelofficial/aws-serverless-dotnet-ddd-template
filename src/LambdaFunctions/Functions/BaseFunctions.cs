@@ -11,25 +11,33 @@ using Application.Results;
 using LambdaFunctions.Settings;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
-using IRequest = Application.CQRS.IRequest;
 
 [assembly: LambdaSerializer(typeof(CustomLambdaSerializer))]
 namespace LambdaFunctions.Functions;
-public abstract class BaseFunctions
+public abstract class BaseFunctions<TRequest, TResponse>
+    where TResponse : IResponse
+    where TRequest : IRequest
 {
     protected readonly IServiceProvider ServiceProvider;
-    private static readonly JsonSerializerOptions ApiJsonOptions = new()
+    private static readonly JsonSerializerOptions _apiJsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    private static readonly Dictionary<string, string> DefaultApiHeaders = new()
+    private static readonly Dictionary<string, string> _defaultApiHeaders = new()
     {
         { "Content-Type", "application/json" },
         { "Access-Control-Allow-Origin", "*" },
         { "Access-Control-Allow-Headers", "Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token" },
         { "Access-Control-Allow-Methods", "POST,OPTIONS" }
+    };
+
+    private static readonly JsonSerializerOptions _requestJsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        Converters = { new JsonStringEnumConverter() },
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
     protected BaseFunctions()
@@ -43,63 +51,25 @@ public abstract class BaseFunctions
         ServiceProvider = services.BuildServiceProvider();
     }
 
-    // Direct Lambda Access
-    protected async Task<Response<TResponse>> HandleResponse<TRequest, TResponse>(
-        TRequest request,
-        ILambdaContext context,
-        Func<TRequest, Task<TResponse>> lambdaFunction,
-        Action<ApiExceptionPolicyHandler> configureExceptionPolicy = null)
-    where TResponse : IResponse
-    where TRequest : IRequest
+    public virtual async Task<object> Handler(object lambdaRequest, ILambdaContext context)
     {
         var exceptionPolicy = new ApiExceptionPolicyHandler()
             .HandleException<Exception>(HttpStatusCode.InternalServerError);
-        configureExceptionPolicy?.Invoke(exceptionPolicy);
+        ConfigureExceptionPolicy(exceptionPolicy);
+
+        var isApiGatewayRequest = TryGetApiGatewayRequest(lambdaRequest, out var apiGatewayRequest);
+        var typedRequest = ParseRequest(lambdaRequest, apiGatewayRequest);
 
         try
         {
-            Log.Information("Processing request: {@Request}", request);
-            var result = await lambdaFunction(request);
-            Log.Debug("Generated response successfully: {@Result}", result);
-            return new Response<TResponse> { Data = result, Error = null };
-        }
-        catch (Exception error)
-        {
-            exceptionPolicy.TryResolve(error, out var httpStatusCode, out var message);
-            Log.Error("HandledException ({StatusCode}): {@Error}", (int)httpStatusCode, error);
-
-            return new Response<TResponse>
-            {
-                Error = new ServiceExceptionResponse
-                {
-                    Status = ((int)httpStatusCode).ToString(),
-                    Message = message
-                }
-            };
-        }
-    }
-
-    // New overload for API Gateway responses
-    protected async Task<APIGatewayProxyResponse> HandleApiGatewayResponse<TRequest, TResponse>(
-        TRequest request,
-        ILambdaContext context,
-        Func<TRequest, Task<TResponse>> lambdaFunction,
-        Action<ApiExceptionPolicyHandler> configureExceptionPolicy = null)
-    where TResponse : IResponse
-    where TRequest : IRequest
-    {
-        var exceptionPolicy = new ApiExceptionPolicyHandler()
-            .HandleException<Exception>(HttpStatusCode.InternalServerError);
-        configureExceptionPolicy?.Invoke(exceptionPolicy);
-
-        try
-        {
-            Log.Information("Processing request: {@Request}", request);
-            var result = await lambdaFunction(request);
+            Log.Information("Processing request: {@Request}", typedRequest);
+            var result = await HandleRequest(typedRequest, context);
             Log.Debug("Generated response successfully: {@Result}", result);
 
             var response = new Response<TResponse> { Data = result, Error = null };
-            return BuildApiGatewayResponse(HttpStatusCode.OK, response);
+            return isApiGatewayRequest
+                ? BuildApiGatewayResponse(HttpStatusCode.OK, response)
+                : response;
         }
         catch (Exception error)
         {
@@ -115,34 +85,104 @@ public abstract class BaseFunctions
                 }
             };
 
-            return BuildApiGatewayResponse(httpStatusCode, errorResponse);
+            return isApiGatewayRequest
+                ? BuildApiGatewayResponse(httpStatusCode, errorResponse)
+                : errorResponse;
         }
     }
 
-    private static APIGatewayProxyResponse BuildApiGatewayResponse<TResponse>(HttpStatusCode statusCode, Response<TResponse> response)
-    where TResponse : IResponse
+    protected abstract Task<TResponse> HandleRequest(TRequest request, ILambdaContext context);
+
+    protected abstract void ConfigureExceptionPolicy(ApiExceptionPolicyHandler exceptionPolicy);
+
+    private TRequest ParseRequest(object lambdaRequest, APIGatewayProxyRequest apiGatewayRequest)
+    {
+        if (apiGatewayRequest != null)
+        {
+            return ExtractRequestFromApiGateway(apiGatewayRequest);
+        }
+
+        if (lambdaRequest is TRequest directRequest)
+        {
+            return directRequest;
+        }
+
+        if (lambdaRequest is string payload)
+        {
+            return DeserializeRequest(payload);
+        }
+
+        if (lambdaRequest is JsonElement jsonElement)
+        {
+            return DeserializeRequest(jsonElement.GetRawText());
+        }
+
+        if (lambdaRequest == null)
+        {
+            return default;
+        }
+
+        var serializedPayload = JsonSerializer.Serialize(lambdaRequest, _requestJsonOptions);
+        return DeserializeRequest(serializedPayload);
+    }
+
+    private static bool TryGetApiGatewayRequest(object lambdaRequest, out APIGatewayProxyRequest apiGatewayRequest)
+    {
+        if (lambdaRequest is APIGatewayProxyRequest typedRequest)
+        {
+            apiGatewayRequest = typedRequest;
+            return true;
+        }
+
+        if (lambdaRequest is JsonElement jsonElement && IsApiGatewayPayload(jsonElement))
+        {
+            apiGatewayRequest = JsonSerializer.Deserialize<APIGatewayProxyRequest>(jsonElement.GetRawText(), _requestJsonOptions);
+            return apiGatewayRequest != null;
+        }
+
+        apiGatewayRequest = null;
+        return false;
+    }
+
+    private static bool IsApiGatewayPayload(JsonElement jsonElement)
+    {
+        if (jsonElement.ValueKind != JsonValueKind.Object)
+        {
+            return false;
+        }
+
+        return jsonElement.TryGetProperty("httpMethod", out _)
+               || jsonElement.TryGetProperty("requestContext", out _)
+               || jsonElement.TryGetProperty("body", out _);
+    }
+
+    private static TRequest DeserializeRequest(string payload)
+    {
+        if (string.IsNullOrWhiteSpace(payload))
+        {
+            return default;
+        }
+
+        return JsonSerializer.Deserialize<TRequest>(payload, _requestJsonOptions);
+    }
+
+    private static APIGatewayProxyResponse BuildApiGatewayResponse(HttpStatusCode statusCode, Response<TResponse> response)
     {
         return new APIGatewayProxyResponse
         {
             StatusCode = (int)statusCode,
-            Headers = DefaultApiHeaders,
-            Body = JsonSerializer.Serialize(response, ApiJsonOptions)
+            Headers = _defaultApiHeaders,
+            Body = JsonSerializer.Serialize(response, _apiJsonOptions)
         };
     }
 
-    // Helper method to extract request from API Gateway
-    protected T ExtractRequestFromApiGateway<T>(APIGatewayProxyRequest apiRequest) where T : class
+    private TRequest ExtractRequestFromApiGateway(APIGatewayProxyRequest apiRequest)
     {
         if (string.IsNullOrEmpty(apiRequest.Body))
-            return null;
-
-        var jsonOptions = new JsonSerializerOptions
         {
-            PropertyNameCaseInsensitive = true,
-            Converters = { new JsonStringEnumConverter() },
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-        };
+            return default;
+        }
 
-        return JsonSerializer.Deserialize<T>(apiRequest.Body, jsonOptions);
+        return JsonSerializer.Deserialize<TRequest>(apiRequest.Body, _requestJsonOptions);
     }
 }
